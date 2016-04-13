@@ -1,0 +1,10 @@
+sites/all/modules/custom/**/*.php
+sites/all/modules/custom/**/*.inc
+sites/all/modules/custom/**/*.module
+sites/all/modules/custom/**/*.install
+sites/all/modules/features/**/*.php
+sites/all/modules/features/**/*.inc
+sites/all/modules/features/**/*.module
+sites/all/modules/features/**/*.install
+sites/all/themes/**/*.php
+sites/all/themes/**/*.inc

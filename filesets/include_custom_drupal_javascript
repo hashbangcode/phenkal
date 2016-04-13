@@ -1,0 +1,3 @@
+sites/all/modules/custom/**/*.js
+sites/all/modules/features/**/*.js
+sites/all/themes/**/*.js

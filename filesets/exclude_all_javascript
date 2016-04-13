@@ -1,0 +1,3 @@
+sites/all/libraries/**
+sites/all/modules/contrib/**
+.scripts/**

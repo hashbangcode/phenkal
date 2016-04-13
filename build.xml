@@ -1,0 +1,549 @@
+<?xml version="1.0"?>
+<project name="drupal_phing_build_file"  default="default">
+
+  <target name="default" description="The default target used when no arguments have been given.">
+    <exec command="./vendor/bin/phing -f ${phing.file} -l" outputProperty="phing_targets" />
+    <echo>Please select a target.</echo>
+    <echo>${phing_targets}</echo>
+  </target>
+
+  <target name="init" hidden="true" description="Initialisation target that sets up certain directory paths.">
+    <!--
+    Create some directories fo use within the project.
+
+    Each of these can be overridden by passing in a parameter or a setting in the build.properties file.
+    -->
+
+    <!-- The directory that holds the source code. -->
+    <resolvepath propertyName="make_path" file="${project.basedir}/../" />
+
+    <!-- The directory that contains the rest of the site components,
+         including the source code, document and web directories. -->
+    <if>
+      <not>
+        <isset property="passed_root_path" />
+      </not>
+      <then>
+        <resolvepath propertyName="root_path" file="../" />
+      </then>
+    </if>
+
+    <!-- The directory that holds all of the user files for the website. -->
+    <if>
+      <not>
+        <isset property="passed_docs_path" />
+      </not>
+      <then>
+        <resolvepath propertyName="docs_path" file="${root_path}/docs" />
+      </then>
+    </if>
+
+    <!-- This is the directory that will be used by the server, it should be symlinked to the real docroot. -->
+    <if>
+      <not>
+        <isset property="passed_web_path" />
+      </not>
+      <then>
+        <resolvepath propertyName="web_path" file="${root_path}/docroot" />
+      </then>
+    </if>
+
+    <!-- Actual docroot directory -->
+    <resolvepath propertyName="docroot_path" file="${project.basedir}/../docroot/"/>
+
+    <!-- pick up the values from the build.properties file (overriding anything that's already been set -->
+    <property file="build.properties" override="true" />
+
+    <!-- Path to the reports directory (can be configured) -->
+    <if>
+      <not>
+        <isset property="build.project.type" />
+      </not>
+      <then>
+        <property name="build.project.type" value="standard" />
+      </then>
+    </if>
+
+    <if>
+      <equals arg1="${build.project.type}" arg2="flat" trim="true" casesensitive="false" />
+      <then>
+        <resolvepath propertyName="reports_path" file="${project.basedir}/../.reports/"/>
+        <property name="scripts_dir" value=".scripts" />
+        <resolvepath propertyName="docroot_path" file="${project.basedir}/../"/>
+      </then>
+      <else>
+        <resolvepath propertyName="reports_path" file="${project.basedir}/../reports/"/>
+        <property name="scripts_dir" value="scripts" />
+      </else>
+    </if>
+
+    <!-- Make the report directory -->
+    <if>
+      <not>
+        <available file="${reports_path}" />
+      </not>
+      <then>
+        <mkdir dir="${reports_path}" />
+      </then>
+    </if>
+
+    <!-- Set the default timestamp. -->
+    <php expression="date_default_timezone_set('Europe/London');" />
+    <tstamp />
+  </target>
+
+  <target name="showproperties" depends="init" description="Debug helper that shows the variables that are currently available">
+    <echo>make_path: ${make_path}</echo>
+    <echo>passed_root_path: ${passed_root_path}</echo>
+    <echo>root_path: ${root_path}</echo>
+    <echo>passed_docs_path: ${passed_docs_path}</echo>
+    <echo>docs_path: ${docs_path}</echo>
+    <echo>passed_web_path: ${passed_web_path}</echo>
+    <echo>web_path: ${web_path}</echo>
+    <echo>docroot_path: ${docroot_path}</echo>
+    <echo>build.project.type: ${build.project.type}</echo>
+    <echo>reports_path: ${reports_path}</echo>
+    <echo>scripts_dir: ${scripts_dir}</echo>
+    <echo>build.drupal.use_make: ${build.drupal.use_make}</echo>
+    <echo>build.drupal.use_apc: ${build.drupal.use_apc}</echo>
+    <echo>build.live.username: ${build.live.username}</echo>
+    <echo>build.live.password: ${build.live.password}</echo>
+    <echo>build.live.host: ${build.live.host}</echo>
+    <echo>build.live.port: ${build.live.port}</echo>
+    <echo>system.db.username: ${system.db.username}</echo>
+    <echo>system.db.password: ${system.db.password}</echo>
+    <echo>system.db.host: ${system.db.host}</echo>
+    <echo>system.db.port: ${system.db.port}</echo>
+  </target>
+
+  <target name="build" depends="init" description="Runs the drush make command and builds the site">
+
+    <if>
+      <and>
+        <isset property="build.drupal.use_make" />
+        <equals arg1="${build.drupal.use_make}" arg2="y" casesensitive="false" />
+      </and>
+      <then>
+
+        <!-- Run Drush Make -->
+        <if>
+          <not>
+            <isset property="drush_make_cache" />
+          </not>
+          <then>
+            <propertyprompt propertyName="drush_make_cache" defaultValue="N" promptText="Run Drush Make with --no-cache flag?" />
+          </then>
+        </if>
+
+        <if>
+          <equals arg1="${drush_make_cache}" arg2="N" />
+          <then>
+            <echo>Running Drush Make with cache (drush make "${make_path}/make/hashbangcode.make" --yes)</echo>
+            <exec command='drush make "${make_path}/make/hashbangcode.make" --yes'
+                  dir="${make_path}/docroot/"
+                  checkreturn="true"
+                  outputProperty="drush_make_output"
+                  returnProperty="drush_make_return" />
+          </then>
+          <else>
+            <echo>Running Drush Make without cache (drush make "${make_path}/make/hashbangcode.make" --no-cache --yes)</echo>
+            <exec command='drush make "${make_path}/make/hashbangcode.make" --no-cache --yes'
+                  dir="${make_path}/docroot/"
+                  checkreturn="true"
+                  outputProperty="drush_make_output"
+                  returnProperty="drush_make_return" />
+          </else>
+        </if>
+
+        <echo>Drush Make Complete</echo>
+        <echo>${drush_make_output}</echo>
+        <echo>${drush_make_return}</echo>
+
+        <if>
+          <contains string="${drush_make_output}" substring="warning" />
+          <then>
+            <fail message="Could not download all modules." />
+          </then>
+        </if>
+
+        <!-- Does directory exist (has drush make been a success)? -->
+        <if>
+          <not>
+            <available file="${make_path}/docroot/index.php" />
+          </not>
+          <then>
+            <fail message="Index file does not exist! Drush Make may have failed?" />
+          </then>
+        </if>
+      </then>
+    </if>
+
+    <if>
+      <and>
+        <isset property="build.drupal.use_apc" />
+        <equals arg1="${build.drupal.use_apc}" arg2="y" casesensitive="false" />
+      </and>
+      <then>
+
+        <!-- copy the apc file so we can view stats -->
+        <echo>Copy and extract APC settings file</echo>
+        <if>
+          <available file="/usr/share/doc/php-apc/apc.php.gz" />
+          <then>
+            <echo>Compressed apc file found, extracting.</echo>
+            <mkdir dir="${make_path}/docroot/sites/all/libraries/APC/" />
+            <copy file="/usr/share/doc/php-apc/apc.php.gz" tofile="${make_path}/docroot/sites/all/libraries/APC/apc.php.gz" overwrite="true" />
+            <exec command="gunzip apc.php.gz" dir="${make_path}/docroot/sites/all/libraries/APC/" />
+            <copy todir="${make_path}/docroot/sites/all/libraries/APC/">
+              <mapper type="glob" from="apc.php" to="apc.php.inc"/>
+              <fileset dir="${make_path}/docroot/sites/all/libraries/APC/">
+                <include name="apc.php" />
+              </fileset>
+            </copy>
+            <delete file="${make_path}/docroot/sites/all/libraries/APC/apc.php" />
+          </then>
+
+          <elseif>
+            <available file="/usr/share/doc/php-apc/apc.php" />
+            <then>
+              <echo>Uncompressed apc file found, copying</echo>
+              <mkdir dir="${make_path}/docroot/sites/all/libraries/APC/" />
+              <copy file="/usr/share/doc/php-apc/apc.php" tofile="${make_path}/docroot/sites/all/libraries/APC/apc.php.inc" overwrite="true" />
+            </then>
+          </elseif>
+
+          <else>
+            <echo>APC not installed on this system, skipping APC setup</echo>
+          </else>
+        </if>
+
+      </then>
+    </if>
+
+    <!-- Run database backup script -->
+    <phingcall target="backupdatabase" />
+
+    <!-- Delete any existing .git files -->
+    <echo>Deleting .git files from site path.</echo>
+    <delete>
+      <fileset dir="${make_path}">
+        <include name="*.git" />
+        <include name="**/*.git" />
+      </fileset>
+    </delete>
+
+    <!-- Remove any previouisly created web paths -->
+    <delete file="${web_path}" />
+
+    <echo>Linking Directories</echo>
+    <!-- Link the document directory -->
+    <delete dir="${make_path}/docroot/sites/default" />
+    <symlink target="${docs_path}" link="${make_path}/docroot/sites/default" />
+
+    <!-- Link the web root -->
+    <symlink target="${web_path}" link="${make_path}/docroot" />
+
+    <echo>Setting permissions</echo>
+    <!-- set permissions on docroot -->
+    <chmod file="${make_path}" mode="0755" failonerror="false" verbose="false" />
+
+    <!-- set permissions on web dir -->
+    <chmod mode="0765" failonerror="false" verbose="false">
+      <fileset dir="${make_path}/docroot" id="DrupalFiles">
+        <include name="**" />
+        <include name="**/*" />
+      </fileset>
+    </chmod>
+
+    <!-- set permissions on files -->
+    <chmod mode="0777" failonerror="false" verbose="false">
+      <fileset dir="${docs_path}/files" id="SiteDocs">
+        <include name="**" />
+        <include name="**/*" />
+      </fileset>
+    </chmod>
+
+    <!-- protect settings file -->
+    <chmod file="${docs_path}/settings.php" mode="0755" failonerror="false" verbose="false" />
+
+    <echo>Build complete.</echo>
+  </target>
+
+  <target name="gittag" depends="init" description="Tag the current branch.">
+    <!-- If we have been supplied a tag then use it, otherwise we generate one based on time and day. -->
+    <if>
+      <isset property="suppliedtag"/>
+      <then>
+        <property name="tagname" value="${suppliedtag}"/>
+      </then>
+      <else>
+        <tstamp>
+          <format property="tagname" pattern="%Y-%m-%d"/>
+        </tstamp>
+      </else>
+    </if>
+
+    <echo>Auto-tagging of version ${tagname}</echo>
+    <gittag repository="${make_path}" name="${tagname}" annotate="true"
+            message="Auto-tagging of version ${tagname}"/>
+    <gitpush repository="${make_path}" destination="origin" tags="true"/>
+  </target>
+
+  <target name="gittaglist" description="Get a list of available tags.">
+    <gittag repository="${make_path}" list="true" pattern="${tagname}" outputProperty="gittags" />
+  </target>
+
+  <target name="gitcheckout" description="Checkout a particular branch or tag.">
+    <gitcheckout repository="/tmp/tmp_build_export" branchname="${tagname}" />
+  </target>
+
+  <target name="gitclone" description="Clone the repository.">
+    <gitclone repository="" targetPath="/tmp/tmp_build_export" />
+  </target>
+
+  <target name="runcodeceptiontests" depends="init" description="Run the available Codeception tests.">
+    <exec command="php codecept.phar run acceptance"
+          dir="${make_path}/tests/"
+          outputProperty="codeceptionrunoutput" />
+    <echo>Codeception Tests complete.</echo>
+    <echo>${codeceptionrunoutput}</echo>
+  </target>
+
+  <target name="backupdatabase" depends="init" description="Runs a database backup using drush">
+    <!-- backup the database -->
+    <echo>Backing Up Database to hashbangcode_${DSTAMP}_${TSTAMP}.sql</echo>
+    <exec command="drush sql-dump --result-file=${root_path}/backups/hashbangcode_${DSTAMP}_${TSTAMP}.sql --gzip --yes"
+          dir="${make_path}/docroot/"
+          outputProperty="backup_output" />
+    <echo>Database backup complete.</echo>
+    <echo>${backup_output}</echo>
+  </target>
+
+  <target name="syntaxcheck_all" depends="init" description="Syntax check the project docroot.">
+    <!-- syntax check -->
+    <phingcall target="syntaxcheck_php" />
+    <phingcall target="syntaxcheck_js" />
+  </target>
+
+  <target name="syntaxcheck_php" depends="init" description="Run PHP syntax checking on the project docroot.">
+    <echo>Checking for PHP syntax errors.</echo>
+    <phplint haltonfailure="true">
+      <fileset dir="${docroot_path}" excludesfile="${project.basedir}/filesets/exclude_all_php" includesfile="${project.basedir}/filesets/include_all_php" />
+    </phplint>
+  </target>
+
+  <target name="syntaxcheck_js" depends="init" description="Run JavaScript syntax checking on the project docroot.">
+    <!-- Find all JavaScript files -->
+    <echo>Checking for JavaScript syntax errors.</echo>
+    <jsllint showwarnings="false">
+      <fileset dir="${docroot_path}" excludesfile="${project.basedir}/filesets/exclude_all_javascript" includesfile="${project.basedir}/filesets/include_all_javascript" />
+    </jsllint>
+  </target>
+
+  <target name="githook" depends="init" description="Create git hooks for the project.">
+    <resolvepath propertyName="git_hooks_path" file="${project.basedir}/../.git/hooks"/>
+    <resolvepath propertyName="repo_hooks_path" file="${project.basedir}/../githooks"/>
+
+    <!-- Delete existing .git/hooks directory -->
+    <delete dir="${git_hooks_path}" quiet="true" failonerror="false" />
+
+    <!-- link the git hooks directories together -->
+    <symlink target="${repo_hooks_path}" link="${git_hooks_path}" />
+
+    <!-- allow all hook files to be executable -->
+    <fileset dir="${repo_hooks_path}" id="hookfiles">
+      <include name="applypatch-msg" />
+      <include name="post-commit" />
+      <include name="post-update" />
+      <include name="pre-commit" />
+      <include name="update" />
+      <include name="commit-msg" />
+      <include name="post-receive" />
+      <include name="pre-applypatch" />
+      <include name="pre-rebase" />
+    </fileset>
+
+    <foreach param="hookfilename" target="chmodsetexecute">
+      <fileset refid="hookfiles" />
+    </foreach>
+  </target>
+
+  <target name="chmodsetexecute" description="Used by githook to set executable option on git hooks.">
+    <exec command="chmod +x ${repo_hooks_path}/${hookfilename}" />
+    <echo>${hookfilename} ${repo_hooks_path}</echo>
+  </target>
+
+  <target name="sudotest" description="Test to see if the current user is administrator. Build fails if not the case.">
+    <!-- Create the currentuser property -->
+    <exec command="whoami" outputProperty="currentuser" />
+
+    <!-- Set the 'issudo' property to be true if the user is root -->
+    <condition property="issudo">
+      <or>
+        <equals arg1="${currentuser}" arg2="root" />
+        <equals arg1="${currentuser}" arg2="jenkins" />
+      </or>
+    </condition>
+
+    <!-- Fail the build if the user is not root -->
+    <if>
+      <not>
+        <equals arg1="${issudo}" arg2="true" />
+      </not>
+      <then>
+        <fail message="You must run this build as sudo! Current user is ${currentuser}" />
+      </then>
+    </if>
+  </target>
+
+  <target name="buildcomposerinstall" description="Install the composer packages used for analysis.">
+    <delete dir="${project.basedir}/vendor" />
+    <exec command="composer install" dir="${project.basedir}" outputProperty="composer_install_output" returnProperty="composer_install_return" />
+    <echo>OUTPUT: ${composer_install_output}</echo>
+    <echo>RETURN: ${composer_install_return}</echo>
+    <echo>Composer install complete</echo>
+  </target>
+
+  <target name="findcustomfiles" hidden="true">
+    <echo>Getting files list REMOVE?.</echo>
+    <fileset dir="${docroot_path}" id="customphpfiles" excludesfile="${project.basedir}/filesets/exclude_custom_drupal_php" includesfile="${project.basedir}/filesets/include_custom_drupal_php" />
+  </target>
+
+  <target name="codeanalysis" depends="syntaxcheck_all,checkfordebugcode-php,checkfordebugcode-js,phploc,phpmd,phpcpd,phpcs,phpdepend" description="Run all code analysis targets." />
+
+  <target name="phploc" depends="init" description="Run a phploc analysis on the custom PHP files in the project.">
+    <phploc reportType="csv" reportName="phploc" reportDirectory="${reports_path}">
+      <fileset dir="${docroot_path}" excludesfile="${project.basedir}/filesets/exclude_custom_drupal_php" includesfile="${project.basedir}/filesets/include_custom_drupal_php" />
+    </phploc>
+  </target>
+
+  <target name="phpmd" depends="init" description="Run a phpmd analysis on the custom PHP files in the project.">
+    <phpmd rulesets="codesize,design,naming,unusedcode">
+      <fileset dir="${docroot_path}" excludesfile="${project.basedir}/filesets/exclude_custom_drupal_php" includesfile="${project.basedir}/filesets/include_custom_drupal_php" />
+      <formatter type="xml" outfile="${reports_path}/pmd.xml"/>
+    </phpmd>
+  </target>
+
+  <target name="phpcpd" depends="init" description="Run a phpcpd analysis on the custom PHP files in the project.">
+    <phpcpd minLines="10" minTokens="20">
+      <fileset dir="${docroot_path}" excludesfile="${project.basedir}/filesets/exclude_custom_drupal_php" includesfile="${project.basedir}/filesets/include_custom_drupal_php" />
+      <formatter type="pmd" outfile="${reports_path}/cpd.xml"/>
+    </phpcpd>
+  </target>
+
+  <target name="phpcs" depends="init" description="Run a phpcs analysis on the custom PHP files in the project.">
+    <!-- Ensure that the phpcs command knows where the Drupal coding standard is. -->
+    <exec command="${project.basedir}/vendor/bin/phpcs --config-set installed_paths ${project.basedir}/vendor/drupal/coder/coder_sniffer/" />
+    <phpcodesniffer standard="Drupal" format="checkstyle">
+      <fileset dir="${docroot_path}" excludesfile="${project.basedir}/filesets/exclude_custom_drupal_php" includesfile="${project.basedir}/filesets/include_custom_drupal_php" />
+      <!-- config name="installed_paths" value="${project.basedir}/vendor/drupal/coder/coder_sniffer/Drupal"/ -->
+      <formatter type="checkstyle" outfile="${reports_path}/checkstyle.xml"/>
+    </phpcodesniffer>
+  </target>
+
+  <target name="phpdepend" depends="init" description="Run a phpdepend analysis on the custom PHP files in the project.">
+    <phpdepend>
+      <fileset dir="${docroot_path}" excludesfile="${project.basedir}/filesets/exclude_custom_drupal_php" includesfile="${project.basedir}/filesets/include_custom_drupal_php" />
+      <logger type="jdepend-xml" outfile="${reports_path}/jdepend.xml"/>
+      <analyzer type="coderank-mode" value="method"/>
+    </phpdepend>
+  </target>
+
+  <target name="varnishflush" description="Clears the Varnish cache on the local machine.">
+    <exec command='varnishadm "ban req.url ~ /"'
+          outputProperty="varnishflush_output"
+          returnProperty="varnishflush_return" />
+
+    <echo>Varnish Flush Complete</echo>
+    <echo>OUTPUT: ${varnishflush_output}</echo>
+    <echo>RETURN: ${varnishflush_return}</echo>
+  </target>
+
+  <target name="testcredentials" depends="init" description="Tests the available authentication properties to ensure they work.">
+    <ssh username="${build.live.username}" password="${build.live.password}" host="${build.live.host}" port="${build.live.port}"
+         command="ls -lah"
+         property="credentialsoutput" />
+  </target>
+
+  <target name="checkfordebugcode-php" depends="init" description="Check custom PHP code for debug statements">
+    <phingcall target="checkfordebugcode">
+      <property name="debugcode.language" value="php" override="true" />
+      <property name="debugcode.regexp" value="(var_dump\(|dsm\(|dpm\()" override="true" />
+    </phingcall>
+  </target>
+
+  <target name="checkfordebugcode-js" depends="init" description="Check custom Javascript code for debug statements">
+    <phingcall target="checkfordebugcode">
+      <property name="debugcode.language" value="javascript" override="true" />
+      <property name="debugcode.regexp" value="(console\.log\()" override="true" />
+    </phingcall>
+  </target>
+
+  <target name="checkfordebugcode" hidden="true" description="Check for any debug code left in custom files.">
+
+    <if>
+      <not>
+        <or>
+          <isset property="debugcode.language" />
+          <isset property="debugcode.regexp" />
+        </or>
+      </not>
+      <then>
+        <fail message="This task should not be run directly. Use either checkfordebugcode-php or checkfordebugcode-js." />
+      </then>
+    </if>
+
+    <echo>Checking for ${debugcode.language} debug code.</echo>
+
+    <fileset id="debugcode.found" dir="${docroot_path}" excludesfile="${project.basedir}/filesets/exclude_custom_drupal_${debugcode.language}" includesfile="${project.basedir}/filesets/include_custom_drupal_${debugcode.language}">
+      <containsregexp expression="${debugcode.regexp}" />
+    </fileset>
+
+    <property name="debugcode.report" value="${reports_path}/debug_${debugcode.language}.log" override="true" />
+
+    <!-- Delete the existing report file -->
+    <delete file="${debugcode.report}" />
+
+    <!-- Initialise a new report file -->
+    <append text="" destFile="${debugcode.report}" />
+
+    <foreach target="reportdebugerrors" param="filename" absparam="absfilename">
+      <fileset refid="debugcode.found" />
+    </foreach>
+
+    <loadfile property="debugcode.found" file="${debugcode.report}" />
+
+    <if>
+      <not>
+        <equals arg1="${debugcode.found}" arg2="" />
+      </not>
+      <then>
+        <fail message="${debugcode.language} debug code detected:${line.separator}${debugcode.found}" />
+      </then>
+      <else>
+        <echo>No ${debugcode.language} debug code found.</echo>
+      </else>
+    </if>
+
+  </target>
+
+  <target name="reportdebugerrors" hidden="true">
+    <loadfile property="debugcode.found" file="${absfilename}">
+      <filterchain>
+        <linecontainsregexp>
+          <regexp pattern="${debugcode.regexp}" />
+        </linecontainsregexp>
+      </filterchain>
+    </loadfile>
+
+    <if>
+      <not>
+        <equals arg1="${debugcode.found}" arg2="" />
+      </not>
+      <then>
+        <append text="${filename}:${line.separator}${debugcode.found}${line.separator}${line.separator}" destFile="${debugcode.report}" />
+      </then>
+    </if>
+  </target>
+
+</project>
