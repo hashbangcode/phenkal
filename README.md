@@ -11,36 +11,36 @@ Requirements
 In order to run this build script you will need jslint installed on the same box as your Jenkins server. Jenkins will also need some plugins in order to run the analysis and process the data.
 
 jslint
-  - download linux source from http://www.javascriptlint.com/download.htm
-  - tar -xcf jsl.tar.gz
-  - cd jsl/src
-  - make -f Makefile.ref
-  - sudo cp Linux_All_DBG.OBJ/jsl /usr/local/bin/jsl
+- download linux source from http://www.javascriptlint.com/download.htm
+- tar -xcf jsl.tar.gz
+- cd jsl/src
+- make -f Makefile.ref
+- sudo cp Linux_All_DBG.OBJ/jsl /usr/local/bin/jsl
 
 You will need the following Jenkins plugins installed:
 
-Static Analysis Collector Plug-in (analysis-collector)
-Static Analysis Utilities (analysis-core)
-Ant Plugin (ant)
-Checkstyle Plug-in (checkstyle)
-Clover PHP plugin (cloverphp)
-Crap4J plugin (crap4j)
-Dependency Analyzer Plugin (dependencyanalyzer)
-DRY Plug-in (dry)
-Git client plugin (git-client)
-Git plugin (git)
-HTML Publisher plugin (htmlpublisher)
-JDepend Plugin (jdepend)
-Phing plugin (phing)
-Plot plugin (plot)
-PMD Plug-in (pmd)
-Radiator View Plugin (radiatorviewplugin)
-SCM API Plugin (scm-api)
-Structs Plugin (structs)
-Template Project plugin (template-project)
-Violations plugin (violations)
-Warnings Plug-in (warnings)
-Xunit Plugin (xunit)
+- Static Analysis Collector Plug-in (analysis-collector)
+- Static Analysis Utilities (analysis-core)
+- Ant Plugin (ant)
+- Checkstyle Plug-in (checkstyle)
+- Clover PHP plugin (cloverphp)
+- Crap4J plugin (crap4j)
+- Dependency Analyzer Plugin (dependencyanalyzer)
+- DRY Plug-in (dry)
+- Git client plugin (git-client)
+- Git plugin (git)
+- HTML Publisher plugin (htmlpublisher)
+- JDepend Plugin (jdepend)
+- Phing plugin (phing)
+- Plot plugin (plot)
+- PMD Plug-in (pmd)
+- Radiator View Plugin (radiatorviewplugin)
+- SCM API Plugin (scm-api)
+- Structs Plugin (structs)
+- Template Project plugin (template-project)
+- Violations plugin (violations)
+- Warnings Plug-in (warnings)
+- Xunit Plugin (xunit)
 
 Usage
 -----
