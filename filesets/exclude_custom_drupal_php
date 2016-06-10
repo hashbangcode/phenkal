@@ -1,4 +1,5 @@
 sites/all/modules/custom/**/*.api.php
 sites/all/modules/custom/**/*.views_default.inc
+sites/all/modules/custom/**/*.features.inc
 sites/all/modules/custom/**/*.features.*.inc
 sites/all/modules/custom/**/*.context.inc
