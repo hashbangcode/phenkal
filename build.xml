@@ -175,7 +175,7 @@
     <echo>Build complete.</echo>
   </target>
 
-  <target name="drushmake" depents="init" description="Run a drush make">
+  <target name="drushmake" depends="init" description="Run a drush make">
     <if>
       <and>
         <isset property="build.drupal.use_make" />
