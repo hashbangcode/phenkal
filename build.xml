@@ -9,7 +9,7 @@
 
   <target name="init" hidden="true" description="Initialisation target that sets up certain directory paths.">
     <!--
-    Create some directories fo use within the project.
+    Create some directory variables fo use within the project.
 
     Each of these can be overridden by passing in a parameter or a setting in the build.properties file.
     -->
@@ -53,6 +53,15 @@
 
     <!-- pick up the values from the build.properties file (overriding anything that's already been set -->
     <property file="build.properties" override="true" />
+
+    <if>
+      <not>
+        <isset property="build.project.name" />
+      </not>
+      <then>
+        <property name="build.project.name" value="site" />
+      </then>
+    </if>
 
     <!-- Path to the reports directory (can be configured) -->
     <if>
@@ -187,7 +196,7 @@
         <if>
           <equals arg1="${drush_make_cache}" arg2="N" />
           <then>
-            <echo>Running Drush Make with cache (drush make "${source_root}/make/hashbangcode.make" --yes)</echo>
+            <echo>Running Drush Make with cache (drush make "${source_root}/make/${build.project.name}.make" --yes)</echo>
             <exec command='drush make "${source_root}/make/site.make" --yes'
                   dir="${source_root}/docroot/"
                   checkreturn="true"
@@ -195,7 +204,7 @@
                   returnProperty="drush_make_return" />
           </then>
           <else>
-            <echo>Running Drush Make without cache (drush make "${source_root}/make/hashbangcode.make" --no-cache --yes)</echo>
+            <echo>Running Drush Make without cache (drush make "${source_root}/make/${build.project.name}.make" --no-cache --yes)</echo>
             <exec command='drush make "${source_root}/make/site.make" --no-cache --yes'
                   dir="${source_root}/docroot/"
                   checkreturn="true"
@@ -270,8 +279,8 @@
 
   <target name="backupdatabase" depends="init" description="Runs a database backup using drush">
     <!-- backup the database -->
-    <echo>Backing Up Database to hashbangcode_${DSTAMP}_${TSTAMP}.sql</echo>
-    <exec command="drush sql-dump --result-file=${root_path}/backups/hashbangcode_${DSTAMP}_${TSTAMP}.sql --gzip --yes"
+    <echo>Backing Up Database to ${build.project.name}_${DSTAMP}_${TSTAMP}.sql</echo>
+    <exec command="drush sql-dump --result-file=${root_path}/backups/${build.project.name}_${DSTAMP}_${TSTAMP}.sql --gzip --yes"
           dir="${source_root}/docroot/"
           outputProperty="backup_output" />
     <echo>Database backup complete.</echo>
