@@ -1,0 +1,6 @@
+modules/custom/**/*.php
+modules/custom/**/*.inc
+modules/custom/**/*.module
+modules/custom/**/*.install
+themes/**/*.php
+themes/**/*.inc

@@ -1,0 +1,2 @@
+modules/custom/**/*.js
+themes/**/*.js

@@ -1,0 +1,5 @@
+**/*.api.php
+.scripts/**
+vendor/**
+core/**
+sites/default/files/**

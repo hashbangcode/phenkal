@@ -1,0 +1,4 @@
+core/**
+vendor/**
+modules/contrib/**
+.scripts/**

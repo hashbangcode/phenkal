@@ -1,0 +1,5 @@
+modules/custom/**/*.api.php
+modules/custom/**/*.views_default.inc
+modules/custom/**/*.features.inc
+modules/custom/**/*.features.*.inc
+modules/custom/**/*.context.inc
