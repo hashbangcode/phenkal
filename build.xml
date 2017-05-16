@@ -15,7 +15,7 @@
     -->
 
     <!-- The directory that holds the source code. -->
-    <resolvepath propertyName="make_path" file="${project.basedir}/../" />
+    <resolvepath propertyName="source_root" file="${project.basedir}/../" />
 
     <!-- The directory that contains the rest of the site components,
          including the source code, document and web directories. -->
@@ -93,7 +93,7 @@
   </target>
 
   <target name="showproperties" depends="init" description="Debug helper that shows the variables that are currently available">
-    <echo>make_path: ${make_path}</echo>
+    <echo>source_root: ${source_root}</echo>
     <echo>passed_root_path: ${passed_root_path}</echo>
     <echo>root_path: ${root_path}</echo>
     <echo>passed_docs_path: ${passed_docs_path}</echo>
@@ -105,7 +105,6 @@
     <echo>reports_path: ${reports_path}</echo>
     <echo>scripts_dir: ${scripts_dir}</echo>
     <echo>build.drupal.use_make: ${build.drupal.use_make}</echo>
-    <echo>build.drupal.use_apc: ${build.drupal.use_apc}</echo>
     <echo>build.live.username: ${build.live.username}</echo>
     <echo>build.live.password: ${build.live.password}</echo>
     <echo>build.live.host: ${build.live.host}</echo>
@@ -118,6 +117,56 @@
 
   <target name="build" depends="init" description="Runs the drush make command and builds the site">
 
+    <!-- Run database backup script -->
+    <phingcall target="backupdatabase" />
+
+    <!-- Delete any existing .git files -->
+    <echo>Deleting .git files from site path.</echo>
+    <delete>
+      <fileset dir="${source_root}">
+        <include name="*.git" />
+        <include name="**/*.git" />
+      </fileset>
+    </delete>
+
+    <!-- Remove any previouisly created web paths -->
+    <delete file="${web_path}" />
+
+    <echo>Linking Directories</echo>
+    <!-- Link the document directory -->
+    <delete dir="${source_root}/docroot/sites/default" />
+    <symlink target="${docs_path}" link="${source_root}/docroot/sites/default" />
+
+    <!-- Link the web root -->
+    <symlink target="${web_path}" link="${source_root}/docroot" />
+
+    <echo>Setting permissions</echo>
+    <!-- set permissions on docroot -->
+    <chmod file="${source_root}" mode="0755" failonerror="false" verbose="false" />
+
+    <!-- set permissions on web dir -->
+    <chmod mode="0765" failonerror="false" verbose="false">
+      <fileset dir="${source_root}/docroot" id="DrupalFiles">
+        <include name="**" />
+        <include name="**/*" />
+      </fileset>
+    </chmod>
+
+    <!-- set permissions on files -->
+    <chmod mode="0777" failonerror="false" verbose="false">
+      <fileset dir="${docs_path}/files" id="SiteDocs">
+        <include name="**" />
+        <include name="**/*" />
+      </fileset>
+    </chmod>
+
+    <!-- protect settings file -->
+    <chmod file="${docs_path}/settings.php" mode="0755" failonerror="false" verbose="false" />
+
+    <echo>Build complete.</echo>
+  </target>
+
+  <target name="drushmake" depents="init" description="Run a drush make">
     <if>
       <and>
         <isset property="build.drupal.use_make" />
@@ -138,17 +187,17 @@
         <if>
           <equals arg1="${drush_make_cache}" arg2="N" />
           <then>
-            <echo>Running Drush Make with cache (drush make "${make_path}/make/hashbangcode.make" --yes)</echo>
-            <exec command='drush make "${make_path}/make/hashbangcode.make" --yes'
-                  dir="${make_path}/docroot/"
+            <echo>Running Drush Make with cache (drush make "${source_root}/make/hashbangcode.make" --yes)</echo>
+            <exec command='drush make "${source_root}/make/site.make" --yes'
+                  dir="${source_root}/docroot/"
                   checkreturn="true"
                   outputProperty="drush_make_output"
                   returnProperty="drush_make_return" />
           </then>
           <else>
-            <echo>Running Drush Make without cache (drush make "${make_path}/make/hashbangcode.make" --no-cache --yes)</echo>
-            <exec command='drush make "${make_path}/make/hashbangcode.make" --no-cache --yes'
-                  dir="${make_path}/docroot/"
+            <echo>Running Drush Make without cache (drush make "${source_root}/make/hashbangcode.make" --no-cache --yes)</echo>
+            <exec command='drush make "${source_root}/make/site.make" --no-cache --yes'
+                  dir="${source_root}/docroot/"
                   checkreturn="true"
                   outputProperty="drush_make_output"
                   returnProperty="drush_make_return" />
@@ -169,7 +218,7 @@
         <!-- Does directory exist (has drush make been a success)? -->
         <if>
           <not>
-            <available file="${make_path}/docroot/index.php" />
+            <available file="${source_root}/docroot/index.php" />
           </not>
           <then>
             <fail message="Index file does not exist! Drush Make may have failed?" />
@@ -177,96 +226,6 @@
         </if>
       </then>
     </if>
-
-    <if>
-      <and>
-        <isset property="build.drupal.use_apc" />
-        <equals arg1="${build.drupal.use_apc}" arg2="y" casesensitive="false" />
-      </and>
-      <then>
-
-        <!-- copy the apc file so we can view stats -->
-        <echo>Copy and extract APC settings file</echo>
-        <if>
-          <available file="/usr/share/doc/php-apc/apc.php.gz" />
-          <then>
-            <echo>Compressed apc file found, extracting.</echo>
-            <mkdir dir="${make_path}/docroot/sites/all/libraries/APC/" />
-            <copy file="/usr/share/doc/php-apc/apc.php.gz" tofile="${make_path}/docroot/sites/all/libraries/APC/apc.php.gz" overwrite="true" />
-            <exec command="gunzip apc.php.gz" dir="${make_path}/docroot/sites/all/libraries/APC/" />
-            <copy todir="${make_path}/docroot/sites/all/libraries/APC/">
-              <mapper type="glob" from="apc.php" to="apc.php.inc"/>
-              <fileset dir="${make_path}/docroot/sites/all/libraries/APC/">
-                <include name="apc.php" />
-              </fileset>
-            </copy>
-            <delete file="${make_path}/docroot/sites/all/libraries/APC/apc.php" />
-          </then>
-
-          <elseif>
-            <available file="/usr/share/doc/php-apc/apc.php" />
-            <then>
-              <echo>Uncompressed apc file found, copying</echo>
-              <mkdir dir="${make_path}/docroot/sites/all/libraries/APC/" />
-              <copy file="/usr/share/doc/php-apc/apc.php" tofile="${make_path}/docroot/sites/all/libraries/APC/apc.php.inc" overwrite="true" />
-            </then>
-          </elseif>
-
-          <else>
-            <echo>APC not installed on this system, skipping APC setup</echo>
-          </else>
-        </if>
-
-      </then>
-    </if>
-
-    <!-- Run database backup script -->
-    <phingcall target="backupdatabase" />
-
-    <!-- Delete any existing .git files -->
-    <echo>Deleting .git files from site path.</echo>
-    <delete>
-      <fileset dir="${make_path}">
-        <include name="*.git" />
-        <include name="**/*.git" />
-      </fileset>
-    </delete>
-
-    <!-- Remove any previouisly created web paths -->
-    <delete file="${web_path}" />
-
-    <echo>Linking Directories</echo>
-    <!-- Link the document directory -->
-    <delete dir="${make_path}/docroot/sites/default" />
-    <symlink target="${docs_path}" link="${make_path}/docroot/sites/default" />
-
-    <!-- Link the web root -->
-    <symlink target="${web_path}" link="${make_path}/docroot" />
-
-    <echo>Setting permissions</echo>
-    <!-- set permissions on docroot -->
-    <chmod file="${make_path}" mode="0755" failonerror="false" verbose="false" />
-
-    <!-- set permissions on web dir -->
-    <chmod mode="0765" failonerror="false" verbose="false">
-      <fileset dir="${make_path}/docroot" id="DrupalFiles">
-        <include name="**" />
-        <include name="**/*" />
-      </fileset>
-    </chmod>
-
-    <!-- set permissions on files -->
-    <chmod mode="0777" failonerror="false" verbose="false">
-      <fileset dir="${docs_path}/files" id="SiteDocs">
-        <include name="**" />
-        <include name="**/*" />
-      </fileset>
-    </chmod>
-
-    <!-- protect settings file -->
-    <chmod file="${docs_path}/settings.php" mode="0755" failonerror="false" verbose="false" />
-
-    <echo>Build complete.</echo>
   </target>
 
   <target name="gittag" depends="init" description="Tag the current branch.">
@@ -284,13 +243,13 @@
     </if>
 
     <echo>Auto-tagging of version ${tagname}</echo>
-    <gittag repository="${make_path}" name="${tagname}" annotate="true"
+    <gittag repository="${source_root}" name="${tagname}" annotate="true"
             message="Auto-tagging of version ${tagname}"/>
-    <gitpush repository="${make_path}" destination="origin" tags="true"/>
+    <gitpush repository="${source_root}" destination="origin" tags="true"/>
   </target>
 
   <target name="gittaglist" description="Get a list of available tags.">
-    <gittag repository="${make_path}" list="true" pattern="${tagname}" outputProperty="gittags" />
+    <gittag repository="${source_root}" list="true" pattern="${tagname}" outputProperty="gittags" />
   </target>
 
   <target name="gitcheckout" description="Checkout a particular branch or tag.">
@@ -303,7 +262,7 @@
 
   <target name="runcodeceptiontests" depends="init" description="Run the available Codeception tests.">
     <exec command="php codecept.phar run acceptance"
-          dir="${make_path}/tests/"
+          dir="${source_root}/tests/"
           outputProperty="codeceptionrunoutput" />
     <echo>Codeception Tests complete.</echo>
     <echo>${codeceptionrunoutput}</echo>
@@ -313,7 +272,7 @@
     <!-- backup the database -->
     <echo>Backing Up Database to hashbangcode_${DSTAMP}_${TSTAMP}.sql</echo>
     <exec command="drush sql-dump --result-file=${root_path}/backups/hashbangcode_${DSTAMP}_${TSTAMP}.sql --gzip --yes"
-          dir="${make_path}/docroot/"
+          dir="${source_root}/docroot/"
           outputProperty="backup_output" />
     <echo>Database backup complete.</echo>
     <echo>${backup_output}</echo>
