@@ -10,12 +10,16 @@ Requirements
 
 In order to run this build script you will need jslint installed on the same box as your Jenkins server. Jenkins will also need some plugins in order to run the analysis and process the data.
 
-jslint
-- download linux source from http://www.javascriptlint.com/download.htm
-- tar -xcf jsl.tar.gz
-- cd jsl/src
-- make -f Makefile.ref
-- sudo cp Linux_All_DBG.OBJ/jsl /usr/local/bin/jsl
+**PHP**
+
+You'll need PHP installed in order to run Phing.
+
+**JSHint**
+
+JSHint is required to run the JavaScript syntax checking. To install jshint run `npm install -g jshint`
+Find out more on the [JSHint website](http://jshint.com/install/)
+
+**Jenkins**
 
 You will need the following Jenkins plugins installed:
 
