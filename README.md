@@ -50,8 +50,12 @@ Usage
 -----
 
 Add this repo to the project you want to inspect. The project expects itself to be in either a "scripts" directory or a ".scripts" directory depending on the flavor of project. The two flavors of Jenkins project currently are "standard" and "flat".
-Copy the example.build.properties file and call it build.properties. Change the variables in here to suit you project.
-In Jenkins use the appropriate command to setup your project. You will then need to tweak some of the settings to your needs. Note that the project uses git and the default branch used in these templates is "dev".
+
+Copy the example.build.properties file and call it build.properties. Change the variables in here to suit you project. You'll also need to change the build.drupal.version parameter in your build.properties file in order to allow you to pick up the correct file set files for your project.
+
+In Jenkins, use the appropriate command to setup your project. You will then need to tweak some of the settings to your needs. Note that the project uses git and the default branch used in these templates is "dev".
+
+Change the name of the required composer.json file for the version of Drupal that you are using. See the PHP Codeniffer section for more information.
 
 Jenkins
 -------
@@ -75,20 +79,33 @@ Filesets
 
 A number of different "filesets" available in the project that are used by the build. These will include or exclude files within the Drupal site.
 
-- exclude_all_javascript
-- exclude_all_php
-- exclude_custom_drupal_javascript
-- exclude_custom_drupal_php
-- include_all_javascript
-- include_all_php
-- include_custom_drupal_javascript
-- include_custom_drupal_php
+- __exclude_all_javascript__ : 
+A list of JavaScript files to ignore within the project.
+
+- __exclude_all_php__ :
+A list of PHP files to ignore within the project.
+
+- __exclude_custom_drupal_javascript__ :
+A list of custom JavaScript files stored within custom Drupal modules or themes to ignore within the project.
+
+- __exclude_custom_drupal_php__ :
+A list of custom PHP files stored within custom Drupal modules or themes to ignore within the project.
+
+- __include_all_javascript__ :
+A list of JavaScript files to include within the project.
+
+- __include_all_php__ :
+A list of PHP files to include within the project.
+
+- __include_custom_drupal_javascript__ : A list of custom JavaScript files stored within custom Drupal modules or themes to include within the project.
+
+- __include_custom_drupal_php__ : A list of custom PHP files stored within custom Drupal modules or themes to include within the project.
 
 
-Codesniffer
+PHP Codesniffer
 -----------
 
-When installing codesniffer you'll want to use the correct version for the version of Drupal that you are running.
+When installing PHP Codesniffer you'll want to use the correct version for the version of Drupal that you are running.
 
 For Drupal 7 you need to run codesniffer lower than version 2.
 
@@ -97,3 +114,5 @@ For Drupal 7 you need to run codesniffer lower than version 2.
 For Drupal 8 you need to run codesniffer higher than (or equal to) version 2.
 
     "squizlabs/php_codesniffer": ">=2",
+
+This can be done by simply selecting the correct composer.json file to use on the project and removing the "drupalX_" from the start of the filename.
