@@ -9,7 +9,7 @@
 
   <target name="init" hidden="true" description="Initialisation target that sets up certain directory paths.">
     <!--
-    Create some directory variables fo use within the project.
+    Create some directories variables for use within the project.
 
     Each of these can be overridden by passing in a parameter or a setting in the build.properties file.
     -->
@@ -53,15 +53,6 @@
 
     <!-- pick up the values from the build.properties file (overriding anything that's already been set -->
     <property file="build.properties" override="true" />
-
-    <if>
-      <not>
-        <isset property="build.project.name" />
-      </not>
-      <then>
-        <property name="build.project.name" value="site" />
-      </then>
-    </if>
 
     <!-- Path to the reports directory (can be configured) -->
     <if>
@@ -110,9 +101,10 @@
     <echo>passed_web_path: ${passed_web_path}</echo>
     <echo>web_path: ${web_path}</echo>
     <echo>docroot_path: ${docroot_path}</echo>
-    <echo>build.project.type: ${build.project.type}</echo>
     <echo>reports_path: ${reports_path}</echo>
     <echo>scripts_dir: ${scripts_dir}</echo>
+    <echo>build.project.type: ${build.project.type}</echo>
+    <echo>build.drupal.version: ${build.drupal.version}</echo>
     <echo>build.drupal.use_make: ${build.drupal.use_make}</echo>
     <echo>build.live.username: ${build.live.username}</echo>
     <echo>build.live.password: ${build.live.password}</echo>
@@ -122,119 +114,6 @@
     <echo>system.db.password: ${system.db.password}</echo>
     <echo>system.db.host: ${system.db.host}</echo>
     <echo>system.db.port: ${system.db.port}</echo>
-  </target>
-
-  <target name="build" depends="init" description="Runs the drush make command and builds the site">
-
-    <!-- Run database backup script -->
-    <phingcall target="backupdatabase" />
-
-    <!-- Delete any existing .git files -->
-    <echo>Deleting .git files from site path.</echo>
-    <delete>
-      <fileset dir="${source_root}">
-        <include name="*.git" />
-        <include name="**/*.git" />
-      </fileset>
-    </delete>
-
-    <!-- Remove any previouisly created web paths -->
-    <delete file="${web_path}" />
-
-    <echo>Linking Directories</echo>
-    <!-- Link the document directory -->
-    <delete dir="${source_root}/docroot/sites/default" />
-    <symlink target="${docs_path}" link="${source_root}/docroot/sites/default" />
-
-    <!-- Link the web root -->
-    <symlink target="${web_path}" link="${source_root}/docroot" />
-
-    <echo>Setting permissions</echo>
-    <!-- set permissions on docroot -->
-    <chmod file="${source_root}" mode="0755" failonerror="false" verbose="false" />
-
-    <!-- set permissions on web dir -->
-    <chmod mode="0765" failonerror="false" verbose="false">
-      <fileset dir="${source_root}/docroot" id="DrupalFiles">
-        <include name="**" />
-        <include name="**/*" />
-      </fileset>
-    </chmod>
-
-    <!-- set permissions on files -->
-    <chmod mode="0777" failonerror="false" verbose="false">
-      <fileset dir="${docs_path}/files" id="SiteDocs">
-        <include name="**" />
-        <include name="**/*" />
-      </fileset>
-    </chmod>
-
-    <!-- protect settings file -->
-    <chmod file="${docs_path}/settings.php" mode="0755" failonerror="false" verbose="false" />
-
-    <echo>Build complete.</echo>
-  </target>
-
-  <target name="drushmake" depends="init" description="Run a drush make">
-    <if>
-      <and>
-        <isset property="build.drupal.use_make" />
-        <equals arg1="${build.drupal.use_make}" arg2="y" casesensitive="false" />
-      </and>
-      <then>
-
-        <!-- Run Drush Make -->
-        <if>
-          <not>
-            <isset property="drush_make_cache" />
-          </not>
-          <then>
-            <propertyprompt propertyName="drush_make_cache" defaultValue="N" promptText="Run Drush Make with --no-cache flag?" />
-          </then>
-        </if>
-
-        <if>
-          <equals arg1="${drush_make_cache}" arg2="N" />
-          <then>
-            <echo>Running Drush Make with cache (drush make "${source_root}/make/${build.project.name}.make" --yes)</echo>
-            <exec command='drush make "${source_root}/make/site.make" --yes'
-                  dir="${source_root}/docroot/"
-                  checkreturn="true"
-                  outputProperty="drush_make_output"
-                  returnProperty="drush_make_return" />
-          </then>
-          <else>
-            <echo>Running Drush Make without cache (drush make "${source_root}/make/${build.project.name}.make" --no-cache --yes)</echo>
-            <exec command='drush make "${source_root}/make/site.make" --no-cache --yes'
-                  dir="${source_root}/docroot/"
-                  checkreturn="true"
-                  outputProperty="drush_make_output"
-                  returnProperty="drush_make_return" />
-          </else>
-        </if>
-
-        <echo>Drush Make Complete</echo>
-        <echo>${drush_make_output}</echo>
-        <echo>${drush_make_return}</echo>
-
-        <if>
-          <contains string="${drush_make_output}" substring="warning" />
-          <then>
-            <fail message="Could not download all modules." />
-          </then>
-        </if>
-
-        <!-- Does directory exist (has drush make been a success)? -->
-        <if>
-          <not>
-            <available file="${source_root}/docroot/index.php" />
-          </not>
-          <then>
-            <fail message="Index file does not exist! Drush Make may have failed?" />
-          </then>
-        </if>
-      </then>
-    </if>
   </target>
 
   <target name="gittag" depends="init" description="Tag the current branch.">
@@ -303,9 +182,9 @@
   <target name="syntaxcheck_js" depends="init" description="Run JavaScript syntax checking on the project docroot.">
     <!-- Find all JavaScript files -->
     <echo>Checking for JavaScript syntax errors.</echo>
-    <jsllint showwarnings="false">
+    <jshint haltOnWarning="false" reporter="jslint">
       <fileset dir="${docroot_path}" excludesfile="${project.basedir}/filesets/exclude_all_javascript" includesfile="${project.basedir}/filesets/include_all_javascript" />
-    </jsllint>
+    </jshint>
   </target>
 
   <target name="githook" depends="init" description="Create git hooks for the project.">
@@ -436,7 +315,7 @@
   <target name="checkfordebugcode-php" depends="init" description="Check custom PHP code for debug statements">
     <phingcall target="checkfordebugcode">
       <property name="debugcode.language" value="php" override="true" />
-      <property name="debugcode.regexp" value="(var_dump\(|dsm\(|dpm\()" override="true" />
+      <property name="debugcode.regexp" value="(var_export\(|var_dump\(|dsm\(|dpm\()" override="true" />
     </phingcall>
   </target>
 
@@ -473,12 +352,13 @@
     <delete file="${debugcode.report}" />
 
     <!-- Initialise a new report file -->
-    <append text="" destFile="${debugcode.report}" />
+    <touch file="${debugcode.report}" />
 
     <foreach target="reportdebugerrors" param="filename" absparam="absfilename">
       <fileset refid="debugcode.found" />
     </foreach>
 
+    <property name="debugcode.found" value="" override="true" />
     <loadfile property="debugcode.found" file="${debugcode.report}" />
 
     <if>
