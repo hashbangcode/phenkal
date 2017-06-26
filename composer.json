@@ -7,9 +7,9 @@
     "phpunit/phpunit": "*",
     "pdepend/pdepend": "*",
     "phpmd/phpmd": "*",
-    "phploc/phploc": "*",
+    "phploc/phploc": "^2.1.*",
     "sebastian/phpcpd": "*",
-    "squizlabs/php_codesniffer": "<2",
+    "squizlabs/php_codesniffer": "^2.9.*",
     "drupal/coder": "*"
   }
 }
