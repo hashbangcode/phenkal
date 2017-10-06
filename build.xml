@@ -141,38 +141,6 @@
     <echo>system.db.port: ${system.db.port}</echo>
   </target>
 
-  <target name="gittag" depends="init" description="Tag the current branch.">
-    <!-- If we have been supplied a tag then use it, otherwise we generate one based on time and day. -->
-    <if>
-      <isset property="suppliedtag"/>
-      <then>
-        <property name="tagname" value="${suppliedtag}"/>
-      </then>
-      <else>
-        <tstamp>
-          <format property="tagname" pattern="%Y-%m-%d"/>
-        </tstamp>
-      </else>
-    </if>
-
-    <echo>Auto-tagging of version ${tagname}</echo>
-    <gittag repository="${source_root}" name="${tagname}" annotate="true"
-            message="Auto-tagging of version ${tagname}"/>
-    <gitpush repository="${source_root}" destination="origin" tags="true"/>
-  </target>
-
-  <target name="gittaglist" description="Get a list of available tags.">
-    <gittag repository="${source_root}" list="true" pattern="${tagname}" outputProperty="gittags" />
-  </target>
-
-  <target name="gitcheckout" description="Checkout a particular branch or tag.">
-    <gitcheckout repository="/tmp/tmp_build_export" branchname="${tagname}" />
-  </target>
-
-  <target name="gitclone" description="Clone the repository.">
-    <gitclone repository="" targetPath="/tmp/tmp_build_export" />
-  </target>
-
   <target name="backupdatabase" depends="init" description="Runs a database backup using drush">
     <!-- backup the database -->
     <echo>Backing Up Database to ${build.project.name}_${DSTAMP}_${TSTAMP}.sql</echo>
