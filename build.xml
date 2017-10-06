@@ -172,39 +172,6 @@
     </jshint>
   </target>
 
-  <target name="githook" depends="init" description="Create git hooks for the project.">
-    <resolvepath propertyName="git_hooks_path" file="${project.basedir}/../.git/hooks"/>
-    <resolvepath propertyName="repo_hooks_path" file="${project.basedir}/../githooks"/>
-
-    <!-- Delete existing .git/hooks directory -->
-    <delete dir="${git_hooks_path}" quiet="true" failonerror="false" />
-
-    <!-- link the git hooks directories together -->
-    <symlink target="${repo_hooks_path}" link="${git_hooks_path}" />
-
-    <!-- allow all hook files to be executable -->
-    <fileset dir="${repo_hooks_path}" id="hookfiles">
-      <include name="applypatch-msg" />
-      <include name="post-commit" />
-      <include name="post-update" />
-      <include name="pre-commit" />
-      <include name="update" />
-      <include name="commit-msg" />
-      <include name="post-receive" />
-      <include name="pre-applypatch" />
-      <include name="pre-rebase" />
-    </fileset>
-
-    <foreach param="hookfilename" target="chmodsetexecute">
-      <fileset refid="hookfiles" />
-    </foreach>
-  </target>
-
-  <target name="chmodsetexecute" description="Used by githook to set executable option on git hooks.">
-    <exec command="chmod +x ${repo_hooks_path}/${hookfilename}" />
-    <echo>${hookfilename} ${repo_hooks_path}</echo>
-  </target>
-
   <target name="sudotest" description="Test to see if the current user is administrator. Build fails if not the case.">
     <!-- Create the currentuser property -->
     <exec command="whoami" outputProperty="currentuser" />
