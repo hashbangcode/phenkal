@@ -1,0 +1,3 @@
+sites/all/themes/**/jquery.*.js
+sites/all/themes/**/vendor/*.js
+sites/all/themes/**/js/bower.js
