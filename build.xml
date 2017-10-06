@@ -203,7 +203,7 @@
     <echo>Composer install complete</echo>
   </target>
 
-  <target name="codeanalysis" depends="syntaxcheck_all,checkfordebugcode-php,checkfordebugcode-js,phploc,phpmd,phpcpd,phpcs,phpdepend" description="Run all code analysis targets." />
+  <target name="codeanalysis" depends="syntaxcheck_all,checkfordebugcode-php,checkfordebugcode-js,checkfortodos-php,checkfortodos-js,phploc,phpmd,phpcpd,phpcs,phpdepend" description="Run all code analysis targets." />
 
   <target name="phploc" depends="init" description="Run a phploc analysis on the custom PHP files in the project.">
     <phploc reportType="csv" reportName="phploc" reportDirectory="${reports_path}">
@@ -279,7 +279,7 @@
     <property name="debugcode.report" value="${reports_path}/debug_${debugcode.language}.log" override="true" />
 
     <!-- Delete the existing report file -->
-    <delete file="${debugcode.report}" />
+    <delete file="${debugcode.report}" failonerror="false" />
 
     <!-- Initialise a new report file -->
     <touch file="${debugcode.report}" />
@@ -319,6 +319,86 @@
       </not>
       <then>
         <append text="${filename}:${line.separator}${debugcode.found}${line.separator}${line.separator}" destFile="${debugcode.report}" />
+      </then>
+    </if>
+  </target>
+
+  <target name="checkfortodos-php" depends="init" description="Check custom PHP code for todo messages">
+    <phingcall target="checkfortodos">
+      <property name="todos.language" value="php" override="true" />
+      <property name="todos.regexp" value="(@todo)" override="true" />
+    </phingcall>
+  </target>
+
+  <target name="checkfortodos-js" depends="init" description="Check custom Javascript code for todo messages">
+    <phingcall target="checkfortodos">
+      <property name="todos.language" value="javascript" override="true" />
+      <property name="todos.regexp" value="(@todo)" override="true" />
+    </phingcall>
+  </target>
+
+  <target name="checkfortodos" hidden="true" description="Check for any todo messages in code.">
+    <if>
+      <not>
+        <or>
+          <isset property="todos.language" />
+          <isset property="todos.regexp" />
+        </or>
+      </not>
+      <then>
+        <fail message="This task should not be run directly. Use either checkfortodos-php or checkfortodos-js." />
+      </then>
+    </if>
+
+    <echo>Checking for ${todos.language} todo messages in code.</echo>
+
+    <fileset id="todos.found" dir="${docroot_path}" excludesfile="${project.basedir}/filesets/${drupal_version_number}/exclude_custom_drupal_${todos.language}" includesfile="${project.basedir}/filesets/${drupal_version_number}/include_custom_drupal_${todos.language}">
+      <containsregexp expression="${todos.regexp}" />
+    </fileset>
+
+    <property name="todos.report" value="${reports_path}/todo_${todos.language}.log" override="true" />
+
+    <!-- Delete the existing report file -->
+    <delete file="${todos.report}" failonerror="false" />
+
+    <!-- Initialise a new report file -->
+    <touch file="${todos.report}" />
+
+    <foreach target="reporttodosfound" param="filename" absparam="absfilename">
+      <fileset refid="todos.found" />
+    </foreach>
+
+    <property name="todos.found" value="" override="true" />
+    <loadfile property="todos.found" file="${todos.report}" />
+
+    <if>
+      <not>
+        <equals arg1="${todos.found}" arg2="" />
+      </not>
+      <then>
+        <echo>${todos.language} todos code detected:${line.separator}${todos.found}</echo>
+      </then>
+      <else>
+        <echo>No ${todos.language} todos code found.</echo>
+      </else>
+    </if>
+  </target>
+
+  <target name="reporttodosfound" hidden="true">
+    <loadfile property="todos.found" file="${absfilename}">
+      <filterchain>
+        <linecontainsregexp>
+          <regexp pattern="${todos.regexp}" />
+        </linecontainsregexp>
+      </filterchain>
+    </loadfile>
+
+    <if>
+      <not>
+        <equals arg1="${todos.found}" arg2="" />
+      </not>
+      <then>
+        <append text="${filename}:${line.separator}${todos.found}${line.separator}${line.separator}" destFile="${todos.report}" />
       </then>
     </if>
   </target>
