@@ -173,14 +173,6 @@
     <gitclone repository="" targetPath="/tmp/tmp_build_export" />
   </target>
 
-  <target name="runcodeceptiontests" depends="init" description="Run the available Codeception tests.">
-    <exec command="php codecept.phar run acceptance"
-          dir="${source_root}/tests/"
-          outputProperty="codeceptionrunoutput" />
-    <echo>Codeception Tests complete.</echo>
-    <echo>${codeceptionrunoutput}</echo>
-  </target>
-
   <target name="backupdatabase" depends="init" description="Runs a database backup using drush">
     <!-- backup the database -->
     <echo>Backing Up Database to ${build.project.name}_${DSTAMP}_${TSTAMP}.sql</echo>
