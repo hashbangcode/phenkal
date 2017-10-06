@@ -203,11 +203,6 @@
     <echo>Composer install complete</echo>
   </target>
 
-  <target name="findcustomfiles" hidden="true">
-    <echo>Getting files list REMOVE?.</echo>
-    <fileset dir="${docroot_path}" id="customphpfiles" excludesfile="${project.basedir}/filesets/${drupal_version_number}/exclude_custom_drupal_php" includesfile="${project.basedir}/filesets/${drupal_version_number}/include_custom_drupal_php" />
-  </target>
-
   <target name="codeanalysis" depends="syntaxcheck_all,checkfordebugcode-php,checkfordebugcode-js,phploc,phpmd,phpcpd,phpcs,phpdepend" description="Run all code analysis targets." />
 
   <target name="phploc" depends="init" description="Run a phploc analysis on the custom PHP files in the project.">
