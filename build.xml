@@ -230,8 +230,8 @@
     <exec command="${project.basedir}/vendor/bin/phpcs --config-set installed_paths ${project.basedir}/vendor/drupal/coder/coder_sniffer/" />
     <phpcodesniffer standard="Drupal" format="checkstyle">
       <fileset dir="${docroot_path}" excludesfile="${project.basedir}/filesets/${drupal_version_number}/exclude_custom_drupal_php" includesfile="${project.basedir}/filesets/${drupal_version_number}/include_custom_drupal_php" />
-      <!-- config name="installed_paths" value="${project.basedir}/vendor/drupal/coder/coder_sniffer/Drupal"/ -->
       <formatter type="checkstyle" outfile="${reports_path}/checkstyle.xml"/>
+      <formatter type="full" outfile="${reports_path}/checkstyle.txt"/>
     </phpcodesniffer>
   </target>
 
