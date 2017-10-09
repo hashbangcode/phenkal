@@ -281,7 +281,10 @@
       <fileset refid="debugcode.found" />
     </foreach>
 
-    <loadfile property="debugcode.found" srcFile="${debugcode.report}" />
+    <loadfile property="debugcode.found" file="${debugcode.report}" />
+
+    <!-- Set a default value of the debugcode.found property so we can use a comparison. -->
+    <property name="debugcode.found" value="" override="false" />
 
     <if>
       <not>
@@ -362,6 +365,9 @@
 
     <!-- Load any todos found into a property. -->
     <loadfile property="todos.found" file="${todos.report}" />
+
+    <!-- Set a default value of the todos.found property so we can use a comparison. -->
+    <property name="todos.found" value="" override="false" />
 
     <if>
       <not>
