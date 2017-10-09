@@ -24,7 +24,7 @@
         <isset property="passed_root_path" />
       </not>
       <then>
-        <resolvepath propertyName="root_path" file="../" />
+        <resolvepath propertyName="root_path" file="../../" />
       </then>
     </if>
 
@@ -49,7 +49,7 @@
     </if>
 
     <!-- Actual docroot directory -->
-    <resolvepath propertyName="docroot_path" file="${project.basedir}/../docroot/"/>
+    <resolvepath propertyName="docroot_path" file="${project.basedir}/../../docroot/"/>
 
     <!-- pick up the values from the build.properties file (overriding anything that's already been set -->
     <property file="build.properties" override="true" />
@@ -68,12 +68,12 @@
       <equals arg1="${build.project.type}" arg2="flat" trim="true" casesensitive="false" />
       <then>
         <resolvepath propertyName="reports_path" file="${project.basedir}/../.reports/"/>
-        <property name="scripts_dir" value=".scripts" />
+        <property name="scripts_dir" value=".scripts/phenkal" />
         <resolvepath propertyName="docroot_path" file="${project.basedir}/../"/>
       </then>
       <else>
-        <resolvepath propertyName="reports_path" file="${project.basedir}/../reports/"/>
-        <property name="scripts_dir" value="scripts" />
+        <resolvepath propertyName="reports_path" file="${project.basedir}/../../reports/"/>
+        <property name="scripts_dir" value="scripts/phenkal" />
       </else>
     </if>
 
@@ -130,15 +130,6 @@
     <echo>build.project.type: ${build.project.type}</echo>
     <echo>build.drupal.version: ${build.drupal.version}</echo>
     <echo>drupal_version_number: ${drupal_version_number}</echo>
-    <echo>build.drupal.use_make: ${build.drupal.use_make}</echo>
-    <echo>build.live.username: ${build.live.username}</echo>
-    <echo>build.live.password: ${build.live.password}</echo>
-    <echo>build.live.host: ${build.live.host}</echo>
-    <echo>build.live.port: ${build.live.port}</echo>
-    <echo>system.db.username: ${system.db.username}</echo>
-    <echo>system.db.password: ${system.db.password}</echo>
-    <echo>system.db.host: ${system.db.host}</echo>
-    <echo>system.db.port: ${system.db.port}</echo>
   </target>
 
   <target name="backupdatabase" depends="init" description="Runs a database backup using drush">
@@ -246,7 +237,7 @@
   <target name="checkfordebugcode-php" depends="init" description="Check custom PHP code for debug statements">
     <phingcall target="checkfordebugcode">
       <property name="debugcode.language" value="php" override="true" />
-      <property name="debugcode.regexp" value="(var_export\(|var_dump\(|dsm\(|dpm\()" override="true" />
+      <property name="debugcode.regexp" value="(var_export\(|var_dump\(|dsm\(|dpm\(|die\(|exit\()" override="true" />
     </phingcall>
   </target>
 
@@ -278,8 +269,10 @@
 
     <property name="debugcode.report" value="${reports_path}/debug_${debugcode.language}.log" override="true" />
 
+    <echo>debugcode.report|${debugcode.report}|</echo>
+
     <!-- Delete the existing report file -->
-    <delete file="${debugcode.report}" failonerror="false" />
+    <delete file="${debugcode.report}" failonerror="false" verbose="false" />
 
     <!-- Initialise a new report file -->
     <touch file="${debugcode.report}" />
@@ -288,8 +281,7 @@
       <fileset refid="debugcode.found" />
     </foreach>
 
-    <property name="debugcode.found" value="" override="true" />
-    <loadfile property="debugcode.found" file="${debugcode.report}" />
+    <loadfile property="debugcode.found" srcFile="${debugcode.report}" />
 
     <if>
       <not>
@@ -359,7 +351,7 @@
     <property name="todos.report" value="${reports_path}/todo_${todos.language}.log" override="true" />
 
     <!-- Delete the existing report file -->
-    <delete file="${todos.report}" failonerror="false" />
+    <delete file="${todos.report}" failonerror="false" verbose="false" />
 
     <!-- Initialise a new report file -->
     <touch file="${todos.report}" />
@@ -368,7 +360,7 @@
       <fileset refid="todos.found" />
     </foreach>
 
-    <property name="todos.found" value="" override="true" />
+    <!-- Load any todos found into a property. -->
     <loadfile property="todos.found" file="${todos.report}" />
 
     <if>
