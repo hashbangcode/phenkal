@@ -3,3 +3,4 @@
 **/*.inc
 **/*.module
 **/*.install
+**/*.theme

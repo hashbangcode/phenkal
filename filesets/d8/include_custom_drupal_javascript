@@ -1,2 +1,2 @@
 modules/custom/**/*.js
-themes/**/*.js
+themes/custom/**/*.js
