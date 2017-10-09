@@ -49,7 +49,7 @@ You will need the following Jenkins plugins installed:
 Usage
 -----
 
-Add this repo to the project you want to inspect. The project expects itself to be in either a "scripts" directory or a ".scripts" directory depending on the flavor of project. The two flavors of Jenkins project currently are "standard" and "flat".
+Add this repo to the project you want to inspect. The project expects itself to be in either a "scripts/phenkal" directory or a ".scripts/phenkal" directory depending on the flavor of project. The two flavors of Jenkins project currently are "standard" and "flat".
 
 Copy the example.build.properties file and call it build.properties. Change the variables in here to suit you project. You'll also need to change the build.drupal.version parameter in your build.properties file in order to allow you to pick up the correct file set files for your project.
 
@@ -79,7 +79,7 @@ Filesets
 
 A number of different "filesets" available in the project that are used by the build. These will include or exclude files within the Drupal site.
 
-- __exclude_all_javascript__ : 
+- __exclude_all_javascript__ :
 A list of JavaScript files to ignore within the project.
 
 - __exclude_all_php__ :
@@ -104,7 +104,6 @@ A list of PHP files to include within the project.
 
 PHP Codesniffer
 -----------
-
 When installing PHP Codesniffer you'll want to use the correct version for the version of Drupal that you are running.
 
 For Drupal 7 you need to run codesniffer lower than version 2.
