@@ -237,7 +237,7 @@
   <target name="checkfordebugcode-php" depends="init" description="Check custom PHP code for debug statements">
     <phingcall target="checkfordebugcode">
       <property name="debugcode.language" value="php" override="true" />
-      <property name="debugcode.regexp" value="(var_export\(|var_dump\(|dsm\(|dpm\(|die\(|exit\()" override="true" />
+      <property name="debugcode.regexp" value="(var_export\(|var_dump\(|dsm\(|dpm\(|die\(|(?&lt;=[^drupal_]|\s|^)exit\()" override="true" />
     </phingcall>
   </target>
 
